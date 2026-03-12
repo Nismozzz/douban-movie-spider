@@ -9,7 +9,13 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import time
+import os
+import smtplib
 from datetime import datetime
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
+from dotenv import load_dotenv
 
 
 class DoubanMovieSpider:
@@ -19,6 +25,18 @@ class DoubanMovieSpider:
         }
         self.base_url = 'https://movie.douban.com'
         self.movies = []
+        self.email_config = self.load_email_config()
+
+    def load_email_config(self):
+        """加载邮箱配置"""
+        load_dotenv()
+        return {
+            'sender': os.getenv('SENDER_EMAIL'),
+            'password': os.getenv('EMAIL_PASSWORD'),
+            'receiver': os.getenv('RECEIVER_EMAIL'),
+            'smtp_server': os.getenv('SMTP_SERVER', 'smtp.qq.com'),
+            'smtp_port': int(os.getenv('SMTP_PORT', 465))
+        }
 
     def get_hot_movies(self):
         """获取正在热映的电影列表"""
@@ -90,15 +108,70 @@ class DoubanMovieSpider:
         """保存数据到JSON文件"""
         if not self.movies:
             print("没有数据可保存")
-            return
+            return False
 
         try:
             with open(filename, 'w', encoding='utf-8') as f:
                 json.dump(self.movies, f, ensure_ascii=False, indent=2)
             print(f"\n数据已保存到 {filename}")
             print(f"共保存 {len(self.movies)} 部电影信息")
+            return True
         except Exception as e:
             print(f"保存文件失败: {e}")
+            return False
+
+    def send_email(self, filename='douban_movies.json'):
+        """发送邮件附件"""
+        if not all(self.email_config.values()):
+            print("\n邮箱配置不完整，跳过邮件发送")
+            print("请创建.env文件并配置邮箱信息（参考.env.example）")
+            return False
+
+        try:
+            # 创建邮件对象
+            msg = MIMEMultipart()
+            msg['From'] = self.email_config['sender']
+            msg['To'] = self.email_config['receiver']
+            msg['Subject'] = f"豆瓣热门电影数据 - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+
+            # 邮件正文
+            body = f"""
+            您好！
+
+            这是豆瓣热门电影爬虫的自动邮件。
+
+            爬取时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+            电影数量：{len(self.movies)} 部
+
+            详细数据请查看附件中的JSON文件。
+
+            ---
+            此邮件由豆瓣电影爬虫自动发送
+            """
+            msg.attach(MIMEText(body, 'plain', 'utf-8'))
+
+            # 添加附件
+            if os.path.exists(filename):
+                with open(filename, 'rb') as f:
+                    attachment = MIMEApplication(f.read(), _subtype='json')
+                    attachment.add_header('Content-Disposition', 'attachment',
+                                        filename=filename)
+                    msg.attach(attachment)
+
+            # 发送邮件
+            print("\n正在发送邮件...")
+            with smtplib.SMTP_SSL(self.email_config['smtp_server'],
+                                 self.email_config['smtp_port']) as server:
+                server.login(self.email_config['sender'],
+                           self.email_config['password'])
+                server.send_message(msg)
+
+            print(f"邮件已成功发送到 {self.email_config['receiver']}")
+            return True
+
+        except Exception as e:
+            print(f"邮件发送失败: {e}")
+            return False
 
     def run(self):
         """运行爬虫"""
@@ -107,7 +180,9 @@ class DoubanMovieSpider:
         print("=" * 50)
 
         self.get_hot_movies()
-        self.save_to_json()
+
+        if self.save_to_json():
+            self.send_email()
 
         print("=" * 50)
         print("爬虫运行完成")
