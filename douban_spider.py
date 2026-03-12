@@ -11,6 +11,7 @@ import json
 import time
 import os
 import smtplib
+import ssl
 from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -160,8 +161,13 @@ class DoubanMovieSpider:
 
             # 发送邮件
             print("\n正在发送邮件...")
+            # 创建SSL上下文，降低安全级别以兼容QQ邮箱
+            context = ssl.create_default_context()
+            context.set_ciphers('DEFAULT@SECLEVEL=1')
+
             with smtplib.SMTP_SSL(self.email_config['smtp_server'],
-                                 self.email_config['smtp_port']) as server:
+                                 self.email_config['smtp_port'],
+                                 context=context) as server:
                 server.login(self.email_config['sender'],
                            self.email_config['password'])
                 server.send_message(msg)
