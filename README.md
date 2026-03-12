@@ -28,7 +28,7 @@ pip install -r requirements.txt
 
 如果需要使用邮件发送功能，请按以下步骤配置：
 
-1. 复制 `.env.example` 文件并重命名为 `.env`
+1. 新建`.env`文件
 2. 编辑 `.env` 文件，填写你的邮箱信息：
 
 ```
