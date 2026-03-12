@@ -164,6 +164,8 @@ class DoubanMovieSpider:
             # 创建SSL上下文，降低安全级别以兼容QQ邮箱
             context = ssl.create_default_context()
             context.set_ciphers('DEFAULT@SECLEVEL=1')
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
 
             with smtplib.SMTP_SSL(self.email_config['smtp_server'],
                                  self.email_config['smtp_port'],
