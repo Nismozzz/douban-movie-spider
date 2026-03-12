@@ -24,7 +24,7 @@
 pip install -r requirements.txt
 ```
 
-## 邮箱配置（可选）
+## 邮箱配置
 
 如果需要使用邮件发送功能，请按以下步骤配置：
 
@@ -38,19 +38,14 @@ RECEIVER_EMAIL=receiver@example.com
 ```
 
 **重要提示：**
-- `EMAIL_PASSWORD` 不是你的QQ密码，而是QQ邮箱的授权码
-- 获取授权码步骤：登录QQ邮箱 → 设置 → 账户 → 开启SMTP服务 → 生成授权码
+- `EMAIL_PASSWORD` QQ邮箱的授权码
 - `.env` 文件已添加到 `.gitignore`，不会被提交到Git仓库
 
 如果不配置邮箱，爬虫仍会正常运行，只是不会发送邮件。
 
 ## 使用方法
 
-运行爬虫脚本：
-
-```bash
-python douban_spider.py
-```
+运行爬虫脚本即可
 
 爬取完成后，数据将保存在 `douban_movies.json` 文件中。
 
@@ -69,12 +64,6 @@ python douban_spider.py
   }
 ]
 ```
-
-## 注意事项
-
-- 请遵守豆瓣的robots.txt协议
-- 不要频繁请求，避免给服务器造成压力
-- 仅供学习交流使用，请勿用于商业用途
 
 ## 许可证
 
